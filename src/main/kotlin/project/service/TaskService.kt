@@ -1,7 +1,7 @@
 package project.service
 
 import org.springframework.stereotype.Service
-import project.model.Task
+import project.model.task.Task
 import project.repository.TaskRepository
 
 @Service

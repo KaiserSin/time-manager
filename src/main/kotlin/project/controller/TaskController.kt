@@ -3,7 +3,7 @@ package project.controller
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import project.model.Task
+import project.model.task.Task
 import project.service.TaskService
 import java.time.Duration
 import java.time.LocalDateTime
@@ -53,6 +53,7 @@ class TaskController(private val taskService: TaskService) {
             }
 
         }
+        return ResponseEntity.status(HttpStatus.OK).body("Task is successfully added")
 
     }
 

@@ -1,4 +1,4 @@
-package project.model
+package project.model.task
 
 import jakarta.persistence.AttributeConverter
 import jakarta.persistence.Converter

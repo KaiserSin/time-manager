@@ -2,8 +2,9 @@ package project.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
-import project.model.task.Task
+import project.model.User
 
 @Repository
-interface TaskRepository : JpaRepository<Task, Long>{
+interface UserRepository: JpaRepository<User, Long> {
+    fun findByName(name: String): User?
 }

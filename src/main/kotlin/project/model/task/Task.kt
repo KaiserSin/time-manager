@@ -1,4 +1,4 @@
-package project.model
+package project.model.task
 
 import jakarta.persistence.*
 import java.time.Duration
