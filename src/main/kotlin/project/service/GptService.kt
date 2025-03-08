@@ -1,7 +1,6 @@
 package project.service
 
 import org.springframework.stereotype.Service
-import project.model.task.Task
 import java.time.Duration
 import java.time.LocalDateTime
 import org.springframework.beans.factory.annotation.Value
