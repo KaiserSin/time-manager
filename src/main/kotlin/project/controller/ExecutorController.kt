@@ -3,12 +3,11 @@ package project.controller
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import project.model.Executor
 import project.service.ExecutorService
 
 @RestController
 @RequestMapping("/executors")
-class UserController(private val executorService: ExecutorService) {
+class ExecutorController(private val executorService: ExecutorService) {
 
     @PostMapping("/create")
     fun createExecutor(@RequestParam("name") name: String): ResponseEntity<Any> {

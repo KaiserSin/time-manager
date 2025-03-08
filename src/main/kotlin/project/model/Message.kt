@@ -11,7 +11,7 @@ data class Message(
 
     @ManyToOne
     @JoinColumn(name = "id_executor", nullable = false)
-    val user: User,
+    val user: Executor,
 
     @Column(nullable = false)
     val sender: String,

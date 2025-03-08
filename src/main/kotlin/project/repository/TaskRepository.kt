@@ -12,8 +12,8 @@ interface TaskRepository : JpaRepository<Task, Long> {
     @Query(
         """
         SELECT t FROM Task t
-        JOIN List l ON t.id = l.id_task
-        WHERE l.id_executor = :executorId
+        JOIN ListTable l ON t.id = l.task.id
+        WHERE l.executor.id = :executorId
         AND (:startTime IS NULL OR t.startTime >= :startTime)
     """
     )

@@ -1,6 +1,7 @@
 package project.model.task
 
 import jakarta.persistence.*
+import project.model.ListTable
 import java.time.Duration
 import java.time.LocalDateTime
 
@@ -26,5 +27,9 @@ data class Task(
     var duration: Duration,
 
     @Column(name = "is_done", nullable = false)
-    val isDone: Boolean = false
+    val isDone: Boolean = false,
+
+    @OneToMany(mappedBy = "task", cascade = [CascadeType.ALL], orphanRemoval = true)
+    val executors: List<ListTable> = mutableListOf()
 )
+
