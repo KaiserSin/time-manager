@@ -3,6 +3,7 @@ package project.service
 import org.springframework.stereotype.Service
 import project.model.task.Task
 import project.repository.TaskRepository
+import java.time.LocalDateTime
 
 @Service
 class TaskService(private val taskRepository: TaskRepository) {
@@ -18,6 +19,24 @@ class TaskService(private val taskRepository: TaskRepository) {
             taskRepository.deleteById(id)
         } else {
             throw NoSuchElementException()
+        }
+    }
+
+    fun getTasksForChatGPT(executorId: Long, startTime: LocalDateTime? = null): List<String> {
+        val tasks = if (startTime != null) {
+            taskRepository.findAllByExecutorId(executorId, startTime)
+        } else {
+            taskRepository.findAllByExecutorId(executorId)
+        }
+
+        return tasks.map { task ->
+            """
+            **Задача:** ${task.name}
+            **Описание:** ${task.description}
+            **Начало:** ${task.startTime}
+            **Длительность:** ${task.duration}
+            **Статус:** ${if (task.isDone) "✅ Выполнено" else "⏳ В процессе"}
+            """.trimIndent()
         }
     }
 }

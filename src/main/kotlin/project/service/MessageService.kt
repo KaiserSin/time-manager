@@ -17,10 +17,9 @@ class MessageService(
         return messageRepository.save(message)
     }
 
-    fun getMessagesByUser(userId: Long): List<MessageResponse> {
-        return messageRepository.findByUserId(userId).map { message ->
-            MessageResponse(sender = message.sender, text = message.text)
-        }
+    fun getMessagesForChatGPT(userId: Long): String {
+        val messages = messageRepository.findByUserId(userId)
+        return messages.joinToString("\n") { "**${it.sender}:** ${it.text}" }
     }
 
     data class MessageResponse(
