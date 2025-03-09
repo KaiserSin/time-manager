@@ -3,16 +3,20 @@ package project.service
 import org.springframework.stereotype.Service
 import project.model.task.Task
 import project.repository.TaskRepository
+import project.repository.ListTableRepository
 import java.time.LocalDateTime
 
 @Service
-class TaskService(private val taskRepository: TaskRepository) {
+class TaskService(
+    private val taskRepository: TaskRepository,
+    private val listTableRepository: ListTableRepository
+) {
 
     fun getAllTasks(): List<Task> = taskRepository.findAll()
 
     fun getTaskById(id: Long): Task? = taskRepository.findById(id).orElse(null)
 
-    fun createTask(task: Task): Task = taskRepository.save(task)
+    suspend fun createTask(task: Task): Task = taskRepository.save(task)
 
     fun deleteTask(id: Long) {
         if (taskRepository.existsById(id)) {
@@ -24,9 +28,12 @@ class TaskService(private val taskRepository: TaskRepository) {
 
     fun getTasksForChatGPT(executorId: Long, startTime: LocalDateTime? = null): List<String> {
         val tasks = if (startTime != null) {
-            taskRepository.findAllByExecutorId(executorId, startTime)
+            listTableRepository.findByExecutorId(executorId)
+                .map { it.task }
+                .filter { it.startTime.isAfter(startTime) }
         } else {
-            taskRepository.findAllByExecutorId(executorId)
+            listTableRepository.findByExecutorId(executorId)
+                .map { it.task }
         }
 
         return tasks.map { task ->

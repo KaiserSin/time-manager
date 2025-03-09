@@ -11,14 +11,16 @@ import java.time.LocalDateTime
 interface TaskRepository : JpaRepository<Task, Long> {
     @Query(
         """
-        SELECT t FROM Task t
-        JOIN ListTable l ON t.id = l.task.id
-        WHERE l.executor.id = :executorId
-        AND (:startTime IS NULL OR t.startTime >= :startTime)
+    SELECT t FROM Task t
+    JOIN ListTable l ON t.id = l.task.id
+    WHERE l.executor.id = :executorId
+    AND (COALESCE(:startTime, t.startTime) = t.startTime OR t.startTime >= :startTime)
     """
     )
     fun findAllByExecutorId(
         @Param("executorId") executorId: Long,
         @Param("startTime") startTime: LocalDateTime? = null
     ): List<Task>
+
+
 }

@@ -28,7 +28,6 @@ data class Task(
 
     @Column(name = "is_done", nullable = false)
     val isDone: Boolean = false,
-
     @OneToMany(mappedBy = "task", cascade = [CascadeType.ALL], orphanRemoval = true)
     val executors: List<ListTable> = mutableListOf()
 )
