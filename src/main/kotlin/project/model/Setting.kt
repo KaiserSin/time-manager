@@ -3,23 +3,16 @@ package project.model
 import jakarta.persistence.*
 
 @Entity
-@Table(name = "message")
-data class Message(
+@Table(name = "setting")
+data class Setting(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long? = null,
+    val id: Long = 0,
 
     @ManyToOne
-    @JoinColumn(name = "id_executor", nullable = false)
-    val user: Executor,
-
-    @Column(nullable = false)
-    val sender: String,
+    @JoinColumn(name = "id_executor", nullable = false, foreignKey = ForeignKey(name = "fk_setting_executor"))
+    val executor: Executor,
 
     @Column(nullable = false, columnDefinition = "TEXT")
     val text: String
 )
-
-
-
-

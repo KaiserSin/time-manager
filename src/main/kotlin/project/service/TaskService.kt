@@ -38,11 +38,11 @@ class TaskService(
 
         return tasks.map { task ->
             """
-            **Задача:** ${task.name}
-            **Описание:** ${task.description}
-            **Начало:** ${task.startTime}
-            **Длительность:** ${task.duration}
-            **Статус:** ${if (task.isDone) "✅ Выполнено" else "⏳ В процессе"}
+            **Task:** ${task.name}
+            **Describe:** ${task.description}
+            **Start time:** ${task.startTime}
+            **Duration:** ${task.duration}
+            **Status:** ${if (task.isDone) "Ready" else "In process"}
             """.trimIndent()
         }
     }
