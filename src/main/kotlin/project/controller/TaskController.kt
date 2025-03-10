@@ -12,7 +12,6 @@ import java.time.Duration
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import kotlin.coroutines.CoroutineContext
 
 @RestController
 @RequestMapping("/tasks")
@@ -20,10 +19,28 @@ class TaskController(
     private val taskService: TaskService,
     private val gptService: GptService,
     private val listTableService: ListTableService
-    ) {
+) {
 
-    @GetMapping()
-    fun getTasks(): List<Task>{
+    data class TaskRequest(
+        val name: String,
+        val description: String,
+        val startTime: String? = null,
+        val duration: Long,
+        val gptDescription: String? = null,
+        val executorId: Long
+    )
+
+    data class TaskResponse(
+        val id: Long?,
+        val name: String,
+        val description: String,
+        val startTime: LocalDateTime,
+        val duration: Long,
+        val isDone: Boolean
+    )
+
+    @GetMapping
+    fun getTasks(): List<Task> {
         return taskService.getAllTasks()
     }
 
@@ -40,44 +57,49 @@ class TaskController(
         }
     }
 
-    @PostMapping()
-    suspend fun postTask(
-        @RequestParam("name") taskName: String,
-        @RequestParam("description") taskDescription: String,
-        @RequestParam(value = "start-time", defaultValue = "None") taskStartTime: String,
-        @RequestParam("duration") taskDuration: Long,
-        @RequestParam(value = "gpt-description", defaultValue = "None") taskGptDescription: String,
-        @RequestParam("executor-id") executorId: Long
-    ): ResponseEntity<Any>{
+    @PostMapping
+    suspend fun postTask(@RequestBody taskRequest: TaskRequest): ResponseEntity<Any> {
         return try {
-            val finalStartTime: LocalDateTime = if (taskStartTime != "None") {
-                LocalDateTime.parse(taskStartTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
+            val finalStartTime: LocalDateTime = if (!taskRequest.startTime.isNullOrBlank()) {
+                LocalDateTime.parse(taskRequest.startTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
             } else {
-                gptService.getOptimalStartTime(taskName, taskDescription, Duration.ofSeconds(taskDuration), taskGptDescription, executorId)
+                gptService.getOptimalStartTime(
+                    taskRequest.name,
+                    taskRequest.description,
+                    Duration.ofSeconds(taskRequest.duration),
+                    taskRequest.gptDescription ?: "None",
+                    taskRequest.executorId
+                )
             }
+
             val task = taskService.createTask(
                 Task(
                     id = null,
-                    name = taskName,
-                    description = taskDescription,
+                    name = taskRequest.name,
+                    description = taskRequest.description,
                     startTime = finalStartTime,
-                    duration = Duration.ofSeconds(taskDuration),
+                    duration = Duration.ofSeconds(taskRequest.duration),
                     isDone = false
                 )
             )
 
-            val executor = Executor(id = executorId, name = "")
+            val executor = Executor(id = taskRequest.executorId)
             listTableService.addTaskToExecutor(task, executor)
 
-            ResponseEntity.status(HttpStatus.OK).body("Task successfully added with start time: $finalStartTime and linked to executor.")
+            val taskResponse = TaskResponse(
+                id = task.id,
+                name = task.name,
+                description = task.description,
+                startTime = task.startTime,
+                duration = task.duration.seconds,
+                isDone = task.isDone
+            )
+
+            ResponseEntity.status(HttpStatus.CREATED).body(taskResponse)
         } catch (e: DateTimeParseException) {
             ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error in start time format: ${e.message}")
         } catch (e: Exception) {
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: ${e.message}")
         }
     }
-
-
-
-
 }
