@@ -10,7 +10,7 @@ data class Executor(
     val id: Long? = null,
 
     @Column(nullable = false, length = 100)
-    val name: String,
+    val name: String? = null,
 
     @OneToMany(mappedBy = "executor", cascade = [CascadeType.ALL], orphanRemoval = true)
     val tasks: List<ListTable> = mutableListOf()

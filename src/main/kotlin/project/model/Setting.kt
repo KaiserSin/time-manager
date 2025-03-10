@@ -9,7 +9,7 @@ data class Setting(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_executor", nullable = false, foreignKey = ForeignKey(name = "fk_setting_executor"))
     val executor: Executor,
 

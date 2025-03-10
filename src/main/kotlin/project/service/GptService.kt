@@ -13,7 +13,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 @Service
 class GptService(
     private val taskService: TaskService,
-    private val messageService: MessageService,
+    private val settingService: SettingService,
     private val objectMapper: ObjectMapper
 ) {
 
@@ -32,8 +32,8 @@ class GptService(
     ): LocalDateTime {
         val now = LocalDateTime.now()
         val futureTasksText = taskService.getTasksForChatGPT(executorId, now).joinToString("\n")
-        val pastMessagesText = messageService.getMessagesForChatGPT(executorId)
-        val prompt = buildPrompt(taskName, taskDescription, taskDuration, futureTasksText, pastMessagesText, gptDescription, now)
+        val settings = settingService.getSettingsForChatGPT(executorId).joinToString("\n")
+        val prompt = buildPrompt(taskName, taskDescription, taskDuration, futureTasksText, settings, gptDescription, now)
         val responseText = sendChatGPTRequest(prompt)
 
         return parseDateTime(responseText)
@@ -44,7 +44,7 @@ class GptService(
         taskDescription: String,
         taskDuration: Duration,
         futureTasks: String,
-        pastMessages: String,
+        settings: String,
         gptDescription: String,
         now: LocalDateTime
     ): String {
@@ -52,8 +52,8 @@ class GptService(
         The user already has the following scheduled tasks:
         $futureTasks
 
-        Here are the user's previous messages:
-        $pastMessages
+        Here are the user's customization:
+        $settings
 
         New task:
         **Task:** $taskName
