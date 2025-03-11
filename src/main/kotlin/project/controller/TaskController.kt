@@ -3,8 +3,10 @@ package project.controller
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import project.model.Executor
+import project.model.executor.Executor
 import project.model.task.Task
+import project.model.task.dto.TaskRequest
+import project.model.task.dto.TaskResponse
 import project.service.GptService
 import project.service.ListTableService
 import project.service.TaskService
@@ -20,24 +22,6 @@ class TaskController(
     private val gptService: GptService,
     private val listTableService: ListTableService
 ) {
-
-    data class TaskRequest(
-        val name: String,
-        val description: String,
-        val startTime: String? = null,
-        val duration: Long,
-        val gptDescription: String? = null,
-        val executorId: Long
-    )
-
-    data class TaskResponse(
-        val id: Long?,
-        val name: String,
-        val description: String,
-        val startTime: LocalDateTime,
-        val duration: Long,
-        val isDone: Boolean
-    )
 
     @GetMapping
     fun getTasks(): List<Task> {
@@ -102,4 +86,62 @@ class TaskController(
             ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: ${e.message}")
         }
     }
+
+    @PutMapping("/{id}")
+    suspend fun updateTask(
+        @PathVariable id: Long,
+        @RequestBody taskRequest: TaskRequest
+    ): ResponseEntity<Any> {
+        return try {
+            val existingTask = taskService.getTaskById(id)
+                ?: return ResponseEntity.notFound().build()
+
+            val finalStartTime: LocalDateTime = if (taskRequest.startTime.isNullOrBlank()) {
+                gptService.getOptimalStartTime(
+                    taskRequest.name,
+                    taskRequest.description,
+                    Duration.ofSeconds(taskRequest.duration),
+                    taskRequest.gptDescription ?: "None",
+                    taskRequest.executorId
+                )
+            } else {
+                LocalDateTime.parse(
+                    taskRequest.startTime,
+                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                )
+            }
+
+            val updatedTask = existingTask.copy(
+                name = taskRequest.name,
+                description = taskRequest.description,
+                startTime = finalStartTime,
+                duration = Duration.ofSeconds(taskRequest.duration),
+                isDone = taskRequest.isDone
+            )
+
+            val savedTask = taskService.updateTask(updatedTask)
+            val executor = Executor(id = taskRequest.executorId)
+            listTableService.addTaskToExecutor(savedTask, executor)
+
+
+            val taskResponse = TaskResponse(
+                id = savedTask.id,
+                name = savedTask.name,
+                description = savedTask.description,
+                startTime = savedTask.startTime,
+                duration = savedTask.duration.seconds,
+                isDone = savedTask.isDone
+            )
+
+            ResponseEntity.ok(taskResponse)
+        } catch (e: DateTimeParseException) {
+            ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body("Error in start time format: ${e.message}")
+        } catch (e: Exception) {
+            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body("An error occurred: ${e.message}")
+        }
+    }
+
+
 }

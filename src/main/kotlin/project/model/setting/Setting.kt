@@ -1,6 +1,7 @@
-package project.model
+package project.model.setting
 
 import jakarta.persistence.*
+import project.model.executor.Executor
 
 @Entity
 @Table(name = "setting")

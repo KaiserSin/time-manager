@@ -1,6 +1,7 @@
-package project.model
+package project.model.list_table
 
 import jakarta.persistence.*
+import project.model.executor.Executor
 import project.model.task.Task
 
 @Entity

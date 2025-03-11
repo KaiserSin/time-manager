@@ -1,7 +1,7 @@
 package project.model.task
 
 import jakarta.persistence.*
-import project.model.ListTable
+import project.model.list_table.ListTable
 import java.time.Duration
 import java.time.LocalDateTime
 

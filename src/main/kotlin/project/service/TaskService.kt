@@ -18,6 +18,11 @@ class TaskService(
 
     suspend fun createTask(task: Task): Task = taskRepository.save(task)
 
+    suspend fun updateTask(task: Task): Task {
+        return taskRepository.save(task)
+    }
+
+
     fun deleteTask(id: Long) {
         if (taskRepository.existsById(id)) {
             taskRepository.deleteById(id)

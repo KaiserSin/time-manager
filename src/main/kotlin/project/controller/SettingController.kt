@@ -2,7 +2,8 @@ package project.controller
 
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import project.model.Setting
+import project.model.setting.dto.SettingRequest
+import project.model.setting.dto.SettingResponse
 import project.service.SettingService
 
 @RestController
@@ -59,15 +60,5 @@ class SettingController(private val settingService: SettingService) {
     }
 
 
-    data class SettingRequest(
-        val executorId: Long,
-        val text: String
-    )
-
-    data class SettingResponse(
-        val id: Long,
-        val executorId: Long?,
-        val text: String
-    )
 
 }

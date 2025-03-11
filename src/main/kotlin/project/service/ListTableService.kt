@@ -1,8 +1,8 @@
 package project.service
 
 import org.springframework.stereotype.Service
-import project.model.Executor
-import project.model.ListTable
+import project.model.executor.Executor
+import project.model.list_table.ListTable
 import project.model.task.Task
 import project.repository.ListTableRepository
 

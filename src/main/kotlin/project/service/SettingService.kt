@@ -3,7 +3,7 @@ package project.service
 import org.springframework.stereotype.Service
 import project.controller.SettingController.SettingResponse
 import project.controller.SettingController.SettingRequest
-import project.model.Setting
+import project.model.setting.Setting
 import project.repository.ExecutorRepository
 import project.repository.SettingRepository
 

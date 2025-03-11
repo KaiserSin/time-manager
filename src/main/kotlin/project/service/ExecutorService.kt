@@ -1,7 +1,7 @@
 package project.service
 
 import org.springframework.stereotype.Service
-import project.model.Executor
+import project.model.executor.Executor
 import project.repository.ExecutorRepository
 import java.util.Optional
 

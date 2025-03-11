@@ -1,6 +1,7 @@
-package project.model
+package project.model.executor
 
 import jakarta.persistence.*
+import project.model.list_table.ListTable
 
 @Entity
 @Table(name = "executor")
