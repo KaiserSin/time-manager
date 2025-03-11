@@ -6,14 +6,28 @@ import project.repository.ExecutorRepository
 import java.util.Optional
 
 @Service
-class ExecutorService(private val executorRepository: ExecutorRepository) {
-
-    fun createExecutor(name: String): Executor {
-        val executor = Executor(name = name)
+class ExecutorService(
+    private val executorRepository: ExecutorRepository
+) {
+    fun createExecutor(executor: Executor): Executor {
         return executorRepository.save(executor)
+    }
+
+    fun findAllExecutors(): List<Executor> {
+        return executorRepository.findAll()
     }
 
     fun findById(id: Long): Optional<Executor> {
         return executorRepository.findById(id)
+    }
+
+    fun updateExecutor(executor: Executor): Executor {
+        return executorRepository.save(executor)
+    }
+
+    fun deleteExecutor(id: Long) {
+        val executor = executorRepository.findById(id)
+            .orElseThrow { NoSuchElementException("Executor not found") }
+        executorRepository.delete(executor)
     }
 }
