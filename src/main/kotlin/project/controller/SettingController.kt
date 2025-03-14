@@ -1,5 +1,9 @@
 package project.controller
 
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PageableDefault
+import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
 import project.model.setting.dto.SettingRequest
@@ -12,37 +16,57 @@ class SettingController(private val settingService: SettingService) {
 
     @PostMapping
     fun createSetting(@RequestBody setting: SettingRequest): ResponseEntity<SettingResponse> {
-        val createdSetting = settingService.createSettingInDb(setting)
-        val response = SettingResponse(
-            id = createdSetting.id,
-            executorId = createdSetting.executor.id,
-            text = createdSetting.text
-        )
-        return ResponseEntity.ok(response)
+        return try {
+            val createdSetting = settingService.createSettingInDb(setting)
+            val response = SettingResponse(
+                id = createdSetting.id,
+                executorId = createdSetting.executor.id,
+                text = createdSetting.text
+            )
+            ResponseEntity.status(HttpStatus.CREATED).body(response)
+        } catch (e: NoSuchElementException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
+        }
     }
-
 
     @DeleteMapping("/{id}")
     fun deleteSetting(@PathVariable id: Long): ResponseEntity<Any> {
         return try {
             settingService.deleteSettingInDb(id)
-            ResponseEntity.ok("Setting with id $id has been successfully deleted.")
+            ResponseEntity.ok("Setting with ID $id has been successfully deleted.")
         } catch (e: NoSuchElementException) {
-            ResponseEntity.notFound().build()
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body("Setting with ID $id not found.")
         }
     }
 
-    @GetMapping
-    fun getAllSettings(): List<SettingResponse> {
-        return settingService.getAllSettings()
-    }
-
     @GetMapping("/{id}")
-    fun getSetting(@PathVariable id: Long): ResponseEntity<SettingResponse> {
+    fun getSettingById(@PathVariable id: Long): ResponseEntity<SettingResponse> {
         val setting = settingService.getSettingById(id)
-        return if (setting != null) ResponseEntity.ok(setting) else ResponseEntity.notFound().build()
+            ?: return ResponseEntity.notFound().build()
+
+        val response = SettingResponse(
+            id = setting.id,
+            executorId = setting.executor.id,
+            text = setting.text
+        )
+        return ResponseEntity.ok(response)
     }
 
+    @GetMapping("/executor/{executorId}")
+    fun getSettingsByExecutorId(
+        @PathVariable executorId: Long,
+        @PageableDefault(size = 10) pageable: Pageable
+    ): ResponseEntity<Page<SettingResponse>> {
+        val settingPage = settingService.getSettingsByExecutorId(executorId, pageable)
+        val responsePage = settingPage.map { setting ->
+            SettingResponse(
+                id = setting.id,
+                executorId = setting.executor?.id,
+                text = setting.text
+            )
+        }
+        return ResponseEntity.ok(responsePage)
+    }
 
     @PutMapping("/{id}")
     fun updateSetting(@PathVariable id: Long, @RequestBody setting: SettingRequest): ResponseEntity<SettingResponse> {
@@ -55,10 +79,7 @@ class SettingController(private val settingService: SettingService) {
             )
             ResponseEntity.ok(response)
         } catch (e: NoSuchElementException) {
-            ResponseEntity.notFound().build()
+            ResponseEntity.status(HttpStatus.NOT_FOUND).build()
         }
     }
-
-
-
 }

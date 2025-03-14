@@ -1,76 +1,73 @@
 package project.controller
 
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
+import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import project.model.executor.Executor
-import project.model.task.Task
 import project.model.task.dto.TaskRequest
 import project.model.task.dto.TaskResponse
-import project.service.GptService
-import project.service.ListTableService
 import project.service.TaskService
-import java.time.Duration
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 
 @RestController
 @RequestMapping("/tasks")
 class TaskController(
-    private val taskService: TaskService,
-    private val gptService: GptService,
-    private val listTableService: ListTableService
+    private val taskService: TaskService
 ) {
 
-    @GetMapping
-    fun getTasks(): List<Task> {
-        return taskService.getAllTasks()
-    }
-
-    @GetMapping("/{id}")
-    fun getTaskById(@PathVariable id: Long) = taskService.getTaskById(id)
-
-    @DeleteMapping("/{id}")
-    fun deleteTask(@PathVariable id: Long): ResponseEntity<Unit> {
+    @PostMapping
+    fun createTask(@RequestBody taskRequest: TaskRequest): ResponseEntity<TaskResponse> {
         return try {
-            taskService.deleteTask(id)
-            ResponseEntity.noContent().build()
+            val createdTask = taskService.createTask(taskRequest)
+            val response = TaskResponse(
+                id = createdTask.id,
+                name = createdTask.name,
+                description = createdTask.description,
+                startTime = createdTask.startTime,
+                duration = createdTask.duration.seconds,
+                isDone = createdTask.isDone
+            )
+            ResponseEntity.status(HttpStatus.CREATED).body(response)
         } catch (e: NoSuchElementException) {
-            ResponseEntity.notFound().build()
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
         }
     }
 
-    @PostMapping
-    suspend fun postTask(@RequestBody taskRequest: TaskRequest): ResponseEntity<Any> {
+    @DeleteMapping("/{id}")
+    fun deleteTask(@PathVariable id: Long): ResponseEntity<Any> {
         return try {
-            val finalStartTime: LocalDateTime = if (!taskRequest.startTime.isNullOrBlank()) {
-                LocalDateTime.parse(taskRequest.startTime, DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"))
-            } else {
-                gptService.getOptimalStartTime(
-                    taskRequest.name,
-                    taskRequest.description,
-                    Duration.ofSeconds(taskRequest.duration),
-                    taskRequest.gptDescription ?: "None",
-                    taskRequest.executorId
-                )
-            }
+            taskService.deleteTask(id)
+            ResponseEntity.ok("Task with ID $id has been successfully deleted.")
+        } catch (e: NoSuchElementException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task with ID $id not found.")
+        }
+    }
 
-            val task = taskService.createTask(
-                Task(
-                    id = null,
-                    name = taskRequest.name,
-                    description = taskRequest.description,
-                    startTime = finalStartTime,
-                    duration = Duration.ofSeconds(taskRequest.duration),
-                    isDone = false
-                )
-            )
+    @GetMapping("/{id}")
+    fun getTaskById(@PathVariable id: Long): ResponseEntity<TaskResponse> {
+        val task = taskService.getTaskById(id)
+            ?: return ResponseEntity.notFound().build()
 
-            val executor = Executor(id = taskRequest.executorId)
-            listTableService.addTaskToExecutor(task, executor)
+        val response = TaskResponse(
+            id = task.id,
+            name = task.name,
+            description = task.description,
+            startTime = task.startTime,
+            duration = task.duration.seconds,
+            isDone = task.isDone
+        )
+        return ResponseEntity.ok(response)
+    }
 
-            val taskResponse = TaskResponse(
+    @GetMapping("/executor/{executorId}")
+    fun getTasksByExecutorId(
+        @PathVariable executorId: Long,
+        @PageableDefault(size = 10) pageable: Pageable
+    ): ResponseEntity<Page<TaskResponse>> {
+        val taskPage = taskService.getTasksByExecutorId(executorId, pageable)
+        val responsePage = taskPage.map { task ->
+            TaskResponse(
                 id = task.id,
                 name = task.name,
                 description = task.description,
@@ -78,70 +75,25 @@ class TaskController(
                 duration = task.duration.seconds,
                 isDone = task.isDone
             )
-
-            ResponseEntity.status(HttpStatus.CREATED).body(taskResponse)
-        } catch (e: DateTimeParseException) {
-            ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error in start time format: ${e.message}")
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("An error occurred: ${e.message}")
         }
+        return ResponseEntity.ok(responsePage)
     }
 
     @PutMapping("/{id}")
-    suspend fun updateTask(
-        @PathVariable id: Long,
-        @RequestBody taskRequest: TaskRequest
-    ): ResponseEntity<Any> {
+    fun updateTask(@PathVariable id: Long, @RequestBody taskRequest: TaskRequest): ResponseEntity<TaskResponse> {
         return try {
-            val existingTask = taskService.getTaskById(id)
-                ?: return ResponseEntity.notFound().build()
-
-            val finalStartTime: LocalDateTime = if (taskRequest.startTime.isNullOrBlank()) {
-                gptService.getOptimalStartTime(
-                    taskRequest.name,
-                    taskRequest.description,
-                    Duration.ofSeconds(taskRequest.duration),
-                    taskRequest.gptDescription ?: "None",
-                    taskRequest.executorId
-                )
-            } else {
-                LocalDateTime.parse(
-                    taskRequest.startTime,
-                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-                )
-            }
-
-            val updatedTask = existingTask.copy(
-                name = taskRequest.name,
-                description = taskRequest.description,
-                startTime = finalStartTime,
-                duration = Duration.ofSeconds(taskRequest.duration),
-                isDone = taskRequest.isDone
+            val updatedTask = taskService.updateTask(id, taskRequest)
+            val response = TaskResponse(
+                id = updatedTask.id,
+                name = updatedTask.name,
+                description = updatedTask.description,
+                startTime = updatedTask.startTime,
+                duration = updatedTask.duration.seconds,
+                isDone = updatedTask.isDone
             )
-
-            val savedTask = taskService.updateTask(updatedTask)
-            val executor = Executor(id = taskRequest.executorId)
-            listTableService.addTaskToExecutor(savedTask, executor)
-
-
-            val taskResponse = TaskResponse(
-                id = savedTask.id,
-                name = savedTask.name,
-                description = savedTask.description,
-                startTime = savedTask.startTime,
-                duration = savedTask.duration.seconds,
-                isDone = savedTask.isDone
-            )
-
-            ResponseEntity.ok(taskResponse)
-        } catch (e: DateTimeParseException) {
-            ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                .body("Error in start time format: ${e.message}")
-        } catch (e: Exception) {
-            ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body("An error occurred: ${e.message}")
+            ResponseEntity.ok(response)
+        } catch (e: NoSuchElementException) {
+            ResponseEntity.status(HttpStatus.NOT_FOUND).build()
         }
     }
-
-
 }

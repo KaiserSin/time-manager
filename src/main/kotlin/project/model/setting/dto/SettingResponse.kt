@@ -5,3 +5,4 @@ data class SettingResponse(
     val executorId: Long?,
     val text: String
 )
+

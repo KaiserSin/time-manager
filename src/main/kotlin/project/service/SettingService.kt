@@ -1,9 +1,10 @@
 package project.service
 
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
-import project.controller.SettingController.SettingResponse
-import project.controller.SettingController.SettingRequest
 import project.model.setting.Setting
+import project.model.setting.dto.SettingRequest
 import project.repository.ExecutorRepository
 import project.repository.SettingRepository
 
@@ -22,26 +23,9 @@ class SettingService(
         return settingRepository.save(setting)
     }
 
-    fun getAllSettings(): List<SettingResponse> {
-        return settingRepository.findAll().map { setting ->
-            SettingResponse(
-                id = setting.id,
-                executorId = setting.executor.id,
-                text = setting.text
-            )
-        }
+    fun getSettingById(id: Long): Setting? {
+        return settingRepository.findById(id).orElse(null)
     }
-
-    fun getSettingById(id: Long): SettingResponse? {
-        return settingRepository.findById(id).map { setting ->
-            SettingResponse(
-                id = setting.id,
-                executorId = setting.executor.id,
-                text = setting.text
-            )
-        }.orElse(null)
-    }
-
 
     fun deleteSettingInDb(id: Long) {
         if (settingRepository.existsById(id)) {
@@ -51,8 +35,12 @@ class SettingService(
         }
     }
 
-    fun getSettingsForChatGPT(executorId: Long): List<String> {
-        return settingRepository.findByExecutorId(executorId).map { setting ->
+    fun getSettingsByExecutorId(executorId: Long, pageable: Pageable): Page<Setting> {
+        return settingRepository.findByExecutorId(executorId, pageable)
+    }
+
+    fun getSettingsForChatGPT(executorId: Long, pageable: Pageable): Page<String> {
+        return settingRepository.findByExecutorId(executorId, pageable).map { setting ->
             "**Customization**: ${setting.text}"
         }
     }

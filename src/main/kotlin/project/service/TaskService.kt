@@ -1,54 +1,66 @@
 package project.service
 
+import org.springframework.data.domain.Page
+import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
 import project.model.task.Task
+import project.model.task.dto.TaskRequest
+import project.repository.ExecutorRepository
 import project.repository.TaskRepository
-import project.repository.ListTableRepository
+import java.time.Duration
 import java.time.LocalDateTime
 
 @Service
 class TaskService(
     private val taskRepository: TaskRepository,
-    private val listTableRepository: ListTableRepository
+    private val executorRepository: ExecutorRepository
 ) {
 
-    fun getAllTasks(): List<Task> = taskRepository.findAll()
+    fun createTask(taskRequest: TaskRequest): Task {
+        val executor = executorRepository.findById(taskRequest.executorId).orElseThrow {
+            NoSuchElementException("Executor with id ${taskRequest.executorId} not found")
+        }
 
-    fun getTaskById(id: Long): Task? = taskRepository.findById(id).orElse(null)
+        val task = Task(
+            name = taskRequest.name,
+            description = taskRequest.description,
+            startTime = LocalDateTime.parse(taskRequest.startTime),
+            duration = Duration.ofSeconds(taskRequest.duration),
+            isDone = taskRequest.isDone
+        )
 
-    suspend fun createTask(task: Task): Task = taskRepository.save(task)
-
-    suspend fun updateTask(task: Task): Task {
         return taskRepository.save(task)
     }
 
+    fun getTaskById(id: Long): Task? {
+        return taskRepository.findById(id).orElse(null)
+    }
 
     fun deleteTask(id: Long) {
         if (taskRepository.existsById(id)) {
             taskRepository.deleteById(id)
         } else {
-            throw NoSuchElementException()
+            throw NoSuchElementException("Task with id $id not found")
         }
     }
 
-    fun getTasksForChatGPT(executorId: Long, startTime: LocalDateTime? = null): List<String> {
-        val tasks = if (startTime != null) {
-            listTableRepository.findByExecutorId(executorId)
-                .map { it.task }
-                .filter { it.startTime.isAfter(startTime) }
-        } else {
-            listTableRepository.findByExecutorId(executorId)
-                .map { it.task }
+    fun getTasksByExecutorId(executorId: Long, pageable: Pageable): Page<Task> {
+        return taskRepository.findAllByExecutorId(executorId, pageable)
+    }
+
+    fun updateTask(id: Long, taskRequest: TaskRequest): Task {
+        val existingTask = taskRepository.findById(id).orElseThrow {
+            NoSuchElementException("Task with id $id not found")
         }
 
-        return tasks.map { task ->
-            """
-            **Task:** ${task.name}
-            **Describe:** ${task.description}
-            **Start time:** ${task.startTime}
-            **Duration:** ${task.duration}
-            **Status:** ${if (task.isDone) "Ready" else "In process"}
-            """.trimIndent()
-        }
+        val updatedTask = existingTask.copy(
+            name = taskRequest.name,
+            description = taskRequest.description,
+            startTime = LocalDateTime.parse(taskRequest.startTime),
+            duration = Duration.ofSeconds(taskRequest.duration),
+            isDone = taskRequest.isDone
+        )
+
+        return taskRepository.save(updatedTask)
     }
 }
