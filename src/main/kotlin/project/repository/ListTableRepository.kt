@@ -2,7 +2,7 @@ package project.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
-import project.model.list_table.ListTable
+import project.model.listtable.ListTable
 
 @Repository
 interface ListTableRepository : JpaRepository<ListTable, Long> {

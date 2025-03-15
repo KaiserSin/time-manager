@@ -3,6 +3,7 @@ package project.service
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
+import project.exception.EntityNotFoundException
 import project.model.task.Task
 import project.model.task.dto.TaskRequest
 import project.repository.ExecutorRepository
@@ -16,19 +17,28 @@ class TaskService(
     private val executorRepository: ExecutorRepository
 ) {
 
+    /**
+     * Создать новую задачу (Task).
+     */
     fun createTask(taskRequest: TaskRequest): Task {
-        val executor = executorRepository.findById(taskRequest.executorId).orElseThrow {
-            NoSuchElementException("Executor with id ${taskRequest.executorId} not found")
+        // Проверяем, что executor существует
+        val executor = executorRepository.findById(taskRequest.executorId)
+            .orElseThrow {
+                EntityNotFoundException("Executor with id ${taskRequest.executorId} not found")
+            }
+
+        // Преобразуем стартовое время и продолжительность
+        val startTime = requireNotNull(taskRequest.startTime) {
+            "startTime cannot be null for task creation"
         }
 
         val task = Task(
             name = taskRequest.name,
             description = taskRequest.description,
-            startTime = LocalDateTime.parse(taskRequest.startTime),
+            startTime = LocalDateTime.parse(startTime),
             duration = Duration.ofSeconds(taskRequest.duration),
             isDone = taskRequest.isDone
         )
-
         return taskRepository.save(task)
     }
 
@@ -36,11 +46,16 @@ class TaskService(
         return taskRepository.findById(id).orElse(null)
     }
 
+    fun getTaskByIdOrThrow(id: Long): Task {
+        return getTaskById(id)
+            ?: throw EntityNotFoundException("Task with id $id not found")
+    }
+
     fun deleteTask(id: Long) {
         if (taskRepository.existsById(id)) {
             taskRepository.deleteById(id)
         } else {
-            throw NoSuchElementException("Task with id $id not found")
+            throw EntityNotFoundException("Task with id $id not found")
         }
     }
 
@@ -49,18 +64,19 @@ class TaskService(
     }
 
     fun updateTask(id: Long, taskRequest: TaskRequest): Task {
-        val existingTask = taskRepository.findById(id).orElseThrow {
-            NoSuchElementException("Task with id $id not found")
+        val existingTask = getTaskByIdOrThrow(id)
+
+        val startTime = requireNotNull(taskRequest.startTime) {
+            "startTime cannot be null for task update"
         }
 
         val updatedTask = existingTask.copy(
             name = taskRequest.name,
             description = taskRequest.description,
-            startTime = LocalDateTime.parse(taskRequest.startTime),
+            startTime = LocalDateTime.parse(startTime),
             duration = Duration.ofSeconds(taskRequest.duration),
             isDone = taskRequest.isDone
         )
-
         return taskRepository.save(updatedTask)
     }
 

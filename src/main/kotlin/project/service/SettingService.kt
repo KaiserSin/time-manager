@@ -3,6 +3,7 @@ package project.service
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Service
+import project.exception.EntityNotFoundException
 import project.model.setting.Setting
 import project.model.setting.dto.SettingRequest
 import project.repository.ExecutorRepository
@@ -15,10 +16,10 @@ class SettingService(
 ) {
 
     fun createSettingInDb(settingRequest: SettingRequest): Setting {
-        val executor = executorRepository.findById(settingRequest.executorId).orElseThrow {
-            NoSuchElementException("Executor with id ${settingRequest.executorId} not found")
-        }
-
+        val executor = executorRepository.findById(settingRequest.executorId)
+            .orElseThrow {
+                EntityNotFoundException("Executor with id ${settingRequest.executorId} not found")
+            }
         val setting = Setting(executor = executor, text = settingRequest.text)
         return settingRepository.save(setting)
     }
@@ -27,11 +28,16 @@ class SettingService(
         return settingRepository.findById(id).orElse(null)
     }
 
+    fun getSettingByIdOrThrow(id: Long): Setting {
+        return getSettingById(id)
+            ?: throw EntityNotFoundException("Setting with id $id not found")
+    }
+
     fun deleteSettingInDb(id: Long) {
         if (settingRepository.existsById(id)) {
             settingRepository.deleteById(id)
         } else {
-            throw NoSuchElementException("Setting with id $id not found")
+            throw EntityNotFoundException("Setting with id $id not found")
         }
     }
 
@@ -46,19 +52,15 @@ class SettingService(
     }
 
     fun updateSetting(id: Long, settingRequest: SettingRequest): Setting {
-        val existingSetting = settingRepository.findById(id).orElseThrow {
-            NoSuchElementException("Setting with id $id not found")
-        }
-
-        val executor = executorRepository.findById(settingRequest.executorId).orElseThrow {
-            NoSuchElementException("Executor with id ${settingRequest.executorId} not found")
-        }
-
+        val existingSetting = getSettingByIdOrThrow(id)
+        val executor = executorRepository.findById(settingRequest.executorId)
+            .orElseThrow {
+                EntityNotFoundException("Executor with id ${settingRequest.executorId} not found")
+            }
         val updatedEntity = existingSetting.copy(
             executor = executor,
             text = settingRequest.text
         )
-
         return settingRepository.save(updatedEntity)
     }
 }

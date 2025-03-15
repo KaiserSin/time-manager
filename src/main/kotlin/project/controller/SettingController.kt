@@ -9,47 +9,30 @@ import org.springframework.web.bind.annotation.*
 import project.model.setting.dto.SettingRequest
 import project.model.setting.dto.SettingResponse
 import project.service.SettingService
+import project.util.toResponse
 
 @RestController
 @RequestMapping("/settings")
-class SettingController(private val settingService: SettingService) {
+class SettingController(
+    private val settingService: SettingService
+) {
 
     @PostMapping
-    fun createSetting(@RequestBody setting: SettingRequest): ResponseEntity<SettingResponse> {
-        return try {
-            val createdSetting = settingService.createSettingInDb(setting)
-            val response = SettingResponse(
-                id = createdSetting.id,
-                executorId = createdSetting.executor.id,
-                text = createdSetting.text
-            )
-            ResponseEntity.status(HttpStatus.CREATED).body(response)
-        } catch (e: NoSuchElementException) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
-        }
+    fun createSetting(@RequestBody settingRequest: SettingRequest): ResponseEntity<SettingResponse> {
+        val createdSetting = settingService.createSettingInDb(settingRequest)
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdSetting.toResponse())
     }
 
     @DeleteMapping("/{id}")
-    fun deleteSetting(@PathVariable id: Long): ResponseEntity<Any> {
-        return try {
-            settingService.deleteSettingInDb(id)
-            ResponseEntity.ok("Setting with ID $id has been successfully deleted.")
-        } catch (e: NoSuchElementException) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body("Setting with ID $id not found.")
-        }
+    fun deleteSetting(@PathVariable id: Long): ResponseEntity<String> {
+        settingService.deleteSettingInDb(id)
+        return ResponseEntity.ok("Setting with ID $id has been successfully deleted.")
     }
 
     @GetMapping("/{id}")
     fun getSettingById(@PathVariable id: Long): ResponseEntity<SettingResponse> {
-        val setting = settingService.getSettingById(id)
-            ?: return ResponseEntity.notFound().build()
-
-        val response = SettingResponse(
-            id = setting.id,
-            executorId = setting.executor.id,
-            text = setting.text
-        )
-        return ResponseEntity.ok(response)
+        val setting = settingService.getSettingByIdOrThrow(id)
+        return ResponseEntity.ok(setting.toResponse())
     }
 
     @GetMapping("/executor/{executorId}")
@@ -58,28 +41,16 @@ class SettingController(private val settingService: SettingService) {
         @PageableDefault(size = 10) pageable: Pageable
     ): ResponseEntity<Page<SettingResponse>> {
         val settingPage = settingService.getSettingsByExecutorId(executorId, pageable)
-        val responsePage = settingPage.map { setting ->
-            SettingResponse(
-                id = setting.id,
-                executorId = setting.executor?.id,
-                text = setting.text
-            )
-        }
+        val responsePage = settingPage.map { it.toResponse() }
         return ResponseEntity.ok(responsePage)
     }
 
     @PutMapping("/{id}")
-    fun updateSetting(@PathVariable id: Long, @RequestBody setting: SettingRequest): ResponseEntity<SettingResponse> {
-        return try {
-            val updatedSetting = settingService.updateSetting(id, setting)
-            val response = SettingResponse(
-                id = updatedSetting.id,
-                executorId = updatedSetting.executor.id,
-                text = updatedSetting.text
-            )
-            ResponseEntity.ok(response)
-        } catch (e: NoSuchElementException) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).build()
-        }
+    fun updateSetting(
+        @PathVariable id: Long,
+        @RequestBody settingRequest: SettingRequest
+    ): ResponseEntity<SettingResponse> {
+        val updatedSetting = settingService.updateSetting(id, settingRequest)
+        return ResponseEntity.ok(updatedSetting.toResponse())
     }
 }

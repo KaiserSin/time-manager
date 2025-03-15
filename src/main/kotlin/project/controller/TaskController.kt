@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*
 import project.model.task.dto.TaskRequest
 import project.model.task.dto.TaskResponse
 import project.service.TaskService
+import project.util.toResponse
 
 @RestController
 @RequestMapping("/tasks")
@@ -18,46 +19,20 @@ class TaskController(
 
     @PostMapping
     fun createTask(@RequestBody taskRequest: TaskRequest): ResponseEntity<TaskResponse> {
-        return try {
-            val createdTask = taskService.createTask(taskRequest)
-            val response = TaskResponse(
-                id = createdTask.id,
-                name = createdTask.name,
-                description = createdTask.description,
-                startTime = createdTask.startTime,
-                duration = createdTask.duration.seconds,
-                isDone = createdTask.isDone
-            )
-            ResponseEntity.status(HttpStatus.CREATED).body(response)
-        } catch (e: NoSuchElementException) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body(null)
-        }
+        val createdTask = taskService.createTask(taskRequest)
+        return ResponseEntity.status(HttpStatus.CREATED).body(createdTask.toResponse())
     }
 
     @DeleteMapping("/{id}")
-    fun deleteTask(@PathVariable id: Long): ResponseEntity<Any> {
-        return try {
-            taskService.deleteTask(id)
-            ResponseEntity.ok("Task with ID $id has been successfully deleted.")
-        } catch (e: NoSuchElementException) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).body("Task with ID $id not found.")
-        }
+    fun deleteTask(@PathVariable id: Long): ResponseEntity<String> {
+        taskService.deleteTask(id)
+        return ResponseEntity.ok("Task with ID $id has been successfully deleted.")
     }
 
     @GetMapping("/{id}")
     fun getTaskById(@PathVariable id: Long): ResponseEntity<TaskResponse> {
-        val task = taskService.getTaskById(id)
-            ?: return ResponseEntity.notFound().build()
-
-        val response = TaskResponse(
-            id = task.id,
-            name = task.name,
-            description = task.description,
-            startTime = task.startTime,
-            duration = task.duration.seconds,
-            isDone = task.isDone
-        )
-        return ResponseEntity.ok(response)
+        val task = taskService.getTaskByIdOrThrow(id)
+        return ResponseEntity.ok(task.toResponse())
     }
 
     @GetMapping("/executor/{executorId}")
@@ -66,34 +41,13 @@ class TaskController(
         @PageableDefault(size = 10) pageable: Pageable
     ): ResponseEntity<Page<TaskResponse>> {
         val taskPage = taskService.getTasksByExecutorId(executorId, pageable)
-        val responsePage = taskPage.map { task ->
-            TaskResponse(
-                id = task.id,
-                name = task.name,
-                description = task.description,
-                startTime = task.startTime,
-                duration = task.duration.seconds,
-                isDone = task.isDone
-            )
-        }
+        val responsePage = taskPage.map { it.toResponse() }
         return ResponseEntity.ok(responsePage)
     }
 
     @PutMapping("/{id}")
     fun updateTask(@PathVariable id: Long, @RequestBody taskRequest: TaskRequest): ResponseEntity<TaskResponse> {
-        return try {
-            val updatedTask = taskService.updateTask(id, taskRequest)
-            val response = TaskResponse(
-                id = updatedTask.id,
-                name = updatedTask.name,
-                description = updatedTask.description,
-                startTime = updatedTask.startTime,
-                duration = updatedTask.duration.seconds,
-                isDone = updatedTask.isDone
-            )
-            ResponseEntity.ok(response)
-        } catch (e: NoSuchElementException) {
-            ResponseEntity.status(HttpStatus.NOT_FOUND).build()
-        }
+        val updatedTask = taskService.updateTask(id, taskRequest)
+        return ResponseEntity.ok(updatedTask.toResponse())
     }
 }

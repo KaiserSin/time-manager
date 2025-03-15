@@ -1,7 +1,7 @@
 package project.model.executor
 
 import jakarta.persistence.*
-import project.model.list_table.ListTable
+import project.model.listtable.ListTable
 
 @Entity
 @Table(name = "executor")
@@ -14,6 +14,5 @@ data class Executor(
     val name: String? = null,
 
     @OneToMany(mappedBy = "executor", cascade = [CascadeType.ALL], orphanRemoval = true)
-    val tasks: List<ListTable> = mutableListOf()
+    val tasks: List<ListTable> = emptyList()
 )
-

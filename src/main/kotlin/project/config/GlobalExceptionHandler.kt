@@ -6,7 +6,7 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.WebRequest
-import project.exeption.EntityNotFoundException
+import project.exception.EntityNotFoundException
 
 @ControllerAdvice
 class GlobalExceptionHandler {

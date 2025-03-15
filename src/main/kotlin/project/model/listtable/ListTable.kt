@@ -1,4 +1,4 @@
-package project.model.list_table
+package project.model.listtable
 
 import jakarta.persistence.*
 import project.model.executor.Executor
