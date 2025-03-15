@@ -63,4 +63,8 @@ class TaskService(
 
         return taskRepository.save(updatedTask)
     }
+
+    fun getTasksForChatGPT(executorId: Long, afterTime: LocalDateTime): List<Task> {
+        return taskRepository.findAllByExecutorIdAndStartTimeAfter(executorId, afterTime)
+    }
 }

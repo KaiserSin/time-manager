@@ -39,8 +39,8 @@ class SettingService(
         return settingRepository.findByExecutorId(executorId, pageable)
     }
 
-    fun getSettingsForChatGPT(executorId: Long, pageable: Pageable): Page<String> {
-        return settingRepository.findByExecutorId(executorId, pageable).map { setting ->
+    fun getSettingsForChatGPT(executorId: Long): List<String> {
+        return settingRepository.findByExecutorId(executorId).map { setting ->
             "**Customization**: ${setting.text}"
         }
     }

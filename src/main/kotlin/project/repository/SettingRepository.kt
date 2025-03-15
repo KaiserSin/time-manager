@@ -9,4 +9,6 @@ import project.model.setting.Setting
 @Repository
 interface SettingRepository : JpaRepository<Setting, Long> {
     fun findByExecutorId(executorId: Long, pageable: Pageable): Page<Setting>
+
+    fun findByExecutorId(executorId: Long): List<Setting>
 }
