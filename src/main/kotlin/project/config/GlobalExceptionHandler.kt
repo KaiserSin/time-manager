@@ -3,6 +3,7 @@ package project.config
 import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.context.request.WebRequest
@@ -39,4 +40,16 @@ class GlobalExceptionHandler {
         log.error("Unexpected error: ${ex.message}", ex)
         return ResponseEntity("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR)
     }
+
+    @ExceptionHandler(MethodArgumentNotValidException::class)
+    fun handleValidationException(
+        ex: MethodArgumentNotValidException,
+        request: WebRequest
+    ): ResponseEntity<Map<String, String?>> {
+        val errors = ex.bindingResult.fieldErrors.associate { error ->
+            error.field to (error.defaultMessage ?: "Invalid value")
+        }
+        return ResponseEntity(errors, HttpStatus.BAD_REQUEST)
+    }
+
 }

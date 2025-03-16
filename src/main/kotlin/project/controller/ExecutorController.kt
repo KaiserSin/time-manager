@@ -5,10 +5,13 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import project.model.executor.dto.ExecutorRequest
 import project.model.executor.dto.ExecutorResponse
 import project.service.ExecutorService
+import project.util.OnCreate
+import project.util.OnUpdate
 import project.util.toResponse
 
 @RestController
@@ -18,7 +21,9 @@ class ExecutorController(
 ) {
 
     @PostMapping
-    fun createExecutor(@RequestBody executorRequest: ExecutorRequest): ResponseEntity<ExecutorResponse> {
+    fun createExecutor(
+        @Validated(OnCreate::class) @RequestBody executorRequest: ExecutorRequest
+    ): ResponseEntity<ExecutorResponse> {
         val createdExecutor = executorService.createExecutor(executorRequest)
         return ResponseEntity.status(HttpStatus.CREATED).body(createdExecutor.toResponse())
     }
@@ -47,7 +52,7 @@ class ExecutorController(
     @PutMapping("/{id}")
     fun updateExecutor(
         @PathVariable id: Long,
-        @RequestBody executorRequest: ExecutorRequest
+        @Validated(OnUpdate::class) @RequestBody executorRequest: ExecutorRequest
     ): ResponseEntity<ExecutorResponse> {
         val updatedExecutor = executorService.updateExecutor(id, executorRequest)
         return ResponseEntity.ok(updatedExecutor.toResponse())

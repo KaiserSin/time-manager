@@ -5,10 +5,13 @@ import org.springframework.data.domain.Pageable
 import org.springframework.data.web.PageableDefault
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.validation.annotation.Validated
 import org.springframework.web.bind.annotation.*
 import project.model.setting.dto.SettingRequest
 import project.model.setting.dto.SettingResponse
 import project.service.SettingService
+import project.util.OnCreate
+import project.util.OnUpdate
 import project.util.toResponse
 
 @RestController
@@ -18,7 +21,9 @@ class SettingController(
 ) {
 
     @PostMapping
-    fun createSetting(@RequestBody settingRequest: SettingRequest): ResponseEntity<SettingResponse> {
+    fun createSetting(
+        @Validated(OnCreate::class) @RequestBody settingRequest: SettingRequest
+    ): ResponseEntity<SettingResponse> {
         val createdSetting = settingService.createSettingInDb(settingRequest)
         return ResponseEntity.status(HttpStatus.CREATED).body(createdSetting.toResponse())
     }
@@ -48,7 +53,7 @@ class SettingController(
     @PutMapping("/{id}")
     fun updateSetting(
         @PathVariable id: Long,
-        @RequestBody settingRequest: SettingRequest
+        @Validated(OnUpdate::class) @RequestBody settingRequest: SettingRequest
     ): ResponseEntity<SettingResponse> {
         val updatedSetting = settingService.updateSetting(id, settingRequest)
         return ResponseEntity.ok(updatedSetting.toResponse())
