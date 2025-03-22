@@ -21,8 +21,8 @@ class TaskController(
 ) {
 
     @PostMapping
-    fun createTask(
-        @Validated(OnCreate::class)@RequestBody taskRequest: TaskRequest
+    suspend fun createTask(
+        @Validated(OnCreate::class) @RequestBody taskRequest: TaskRequest
     ): ResponseEntity<TaskResponse> {
         val createdTask = taskService.createTask(taskRequest)
         return ResponseEntity.status(HttpStatus.CREATED).body(createdTask.toResponse())
@@ -40,12 +40,12 @@ class TaskController(
         return ResponseEntity.ok(task.toResponse())
     }
 
-    @GetMapping("/user/{executorId}")
-    fun getTasksByExecutorId(
-        @PathVariable executorId: Long,
+    @GetMapping("/user/{userId}")
+    fun getTasksByUserId(
+        @PathVariable userId: Long,
         @PageableDefault(size = 10) pageable: Pageable
     ): ResponseEntity<Page<TaskResponse>> {
-        val taskPage = taskService.getTasksByExecutorId(executorId, pageable)
+        val taskPage = taskService.getTasksByUserId(userId, pageable)
         val responsePage = taskPage.map { it.toResponse() }
         return ResponseEntity.ok(responsePage)
     }

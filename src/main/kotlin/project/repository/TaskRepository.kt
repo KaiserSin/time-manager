@@ -9,27 +9,28 @@ import org.springframework.stereotype.Repository
 import project.model.task.Task
 import java.time.LocalDateTime
 
-
 @Repository
 interface TaskRepository : JpaRepository<Task, Long> {
 
     @Query("""
-        SELECT t FROM Task t 
-        JOIN ListTable l ON t.id = l.task.id 
-        WHERE l.user.id = :executorId
+        SELECT t FROM Task t
+        JOIN ListTable l ON t.id = l.task.id
+        WHERE l.user.id = :userId
     """)
-    fun findAllByExecutorId(@Param("executorId") executorId: Long, pageable: Pageable): Page<Task>
-
+    fun findAllByUserId(
+        @Param("userId") userId: Long,
+        pageable: Pageable
+    ): Page<Task>
 
     @Query("""
         SELECT t FROM Task t
         JOIN ListTable l ON t.id = l.task.id
-        WHERE l.user.id = :executorId
-        AND t.startTime > :afterTime
+        WHERE l.user.id = :userId
+          AND t.startTime > :afterTime
         ORDER BY t.startTime ASC
     """)
-    fun findAllByExecutorIdAndStartTimeAfter(
-        @Param("executorId") executorId: Long,
+    fun findAllByUserIdAndStartTimeAfter(
+        @Param("userId") userId: Long,
         @Param("afterTime") afterTime: LocalDateTime
     ): List<Task>
 }

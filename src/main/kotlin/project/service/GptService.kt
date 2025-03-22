@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.stereotype.Service
 import java.time.Duration
@@ -20,8 +21,10 @@ class GptService(
     @Value("\${openai.api.key}")
     private lateinit var apiKey: String
 
+    private val log = LoggerFactory.getLogger(GptService::class.java)
     private val client = OkHttpClient()
     private val url = "https://api.openai.com/v1/chat/completions"
+
     fun getOptimalStartTime(
         taskName: String,
         taskDescription: String,
@@ -39,8 +42,8 @@ class GptService(
             taskName, taskDescription, taskDuration,
             futureTasksText, settingsText, gptDescription, now
         )
-        val responseText = sendChatGPTRequest(prompt)
 
+        val responseText = sendChatGPTRequest(prompt)
         return parseDateTime(responseText)
     }
 
@@ -54,25 +57,26 @@ class GptService(
         now: LocalDateTime
     ): String {
         return """
-            The user already has the following scheduled tasks:
+            Scheduled tasks (after $now):
             $futureTasks
-
-            Here are the user's customization:
+        
+            User's preferences:
             $settings
-
-            New task:
-            **Task:** $taskName
-            **Description:** $taskDescription
-            **GPT Additional Context:** $gptDescription
-            **Duration:** $taskDuration
-
-            The task should be scheduled starting from $now and onwards.
-            Based on the schedule and past discussions, suggest the optimal start time for this task.
-            Respond only with a valid ISO 8601 datetime (e.g., 2024-03-10T09:00:00), without any additional text.
+            
+            New Task:
+            - Name: $taskName
+            - Description: $taskDescription
+            - Additional context: $gptDescription
+            - Duration: $taskDuration
+            
+            Please provide the optimal start time (ISO 8601, e.g. 2024-03-10T09:00:00) after $now.
+            Reply with only the datetime, no extra text.
         """.trimIndent()
     }
 
     private fun sendChatGPTRequest(prompt: String): String {
+        log.info("Sending request to ChatGPT...")
+
         val requestBody = objectMapper.writeValueAsString(
             mapOf(
                 "model" to "gpt-3.5-turbo",
@@ -94,13 +98,25 @@ class GptService(
             .post(requestBody)
             .build()
 
-        client.newCall(request).execute().use { response ->
-            if (!response.isSuccessful) {
-                throw RuntimeException("Error in ChatGPT request: ${response.body?.string()}")
+        try {
+            client.newCall(request).execute().use { response ->
+                if (!response.isSuccessful) {
+                    val body = response.body?.string()
+                    log.error("ChatGPT request failed: $body")
+                    throw RuntimeException("Error in ChatGPT request: $body")
+                }
+                val chatResponse = objectMapper.readTree(response.body?.string())
+                val content = chatResponse["choices"]?.get(0)?.get("message")?.get("content")?.asText()
+                if (content == null) {
+                    log.error("ChatGPT response is missing expected fields")
+                    throw RuntimeException("ChatGPT did not return a valid message content")
+                }
+                log.debug("Response from ChatGPT: $content")
+                return content
             }
-            val chatResponse = objectMapper.readTree(response.body?.string())
-            return chatResponse["choices"]?.get(0)?.get("message")?.get("content")?.asText()
-                ?: throw RuntimeException("ChatGPT did not return a response")
+        } catch (e: Exception) {
+            log.error("Failed to call ChatGPT API", e)
+            throw RuntimeException("ChatGPT API call error", e)
         }
     }
 
@@ -108,7 +124,8 @@ class GptService(
         return try {
             LocalDateTime.parse(responseText)
         } catch (e: DateTimeParseException) {
-            throw RuntimeException("ChatGPT returned an invalid date format: $responseText")
+            log.error("ChatGPT returned an invalid date format: $responseText", e)
+            throw RuntimeException("ChatGPT returned an invalid date format: $responseText", e)
         }
     }
 }

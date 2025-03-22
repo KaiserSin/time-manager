@@ -6,6 +6,8 @@ import project.model.listtable.ListTable
 
 @Repository
 interface ListTableRepository : JpaRepository<ListTable, Long> {
-    fun findByTaskId(taskId: Long): List<ListTable>
-    fun findByExecutorId(executorId: Long): List<ListTable>
+
+    fun findAllByTaskId(taskId: Long): List<ListTable>
+
+    fun findAllByUserId(userId: Long): List<ListTable>
 }

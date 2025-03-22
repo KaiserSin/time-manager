@@ -45,7 +45,7 @@ class SettingController(
         @PathVariable executorId: Long,
         @PageableDefault(size = 10) pageable: Pageable
     ): ResponseEntity<Page<SettingResponse>> {
-        val settingPage = settingService.getSettingsByExecutorId(executorId, pageable)
+        val settingPage = settingService.getSettingsByUserId(executorId, pageable)
         val responsePage = settingPage.map { it.toResponse() }
         return ResponseEntity.ok(responsePage)
     }
