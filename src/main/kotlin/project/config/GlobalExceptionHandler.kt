@@ -6,8 +6,8 @@ import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ControllerAdvice
 import org.springframework.web.bind.annotation.ExceptionHandler
-import org.springframework.web.context.request.WebRequest
 import project.exception.EntityNotFoundException
+import project.model.error.dto.ErrorResponse
 
 @ControllerAdvice
 class GlobalExceptionHandler {
@@ -15,41 +15,45 @@ class GlobalExceptionHandler {
     private val log = LoggerFactory.getLogger(GlobalExceptionHandler::class.java)
 
     @ExceptionHandler(NoSuchElementException::class)
-    fun handleNoSuchElementException(
-        ex: NoSuchElementException,
-        request: WebRequest
-    ): ResponseEntity<String> {
-        log.error("NoSuchElementException: ${ex.message}", ex)
-        return ResponseEntity(ex.message, HttpStatus.NOT_FOUND)
+    fun handleNoSuchElementException(ex: NoSuchElementException): ResponseEntity<ErrorResponse> {
+        log.warn("NoSuchElementException: ${ex.message}", ex)
+        val error = ErrorResponse(
+            message = ex.message ?: "No such element",
+            errorCode = "NOT_FOUND"
+        )
+        return ResponseEntity(error, HttpStatus.NOT_FOUND)
     }
 
     @ExceptionHandler(EntityNotFoundException::class)
-    fun handleEntityNotFoundException(
-        ex: EntityNotFoundException,
-        request: WebRequest
-    ): ResponseEntity<String> {
-        log.error("EntityNotFoundException: ${ex.message}", ex)
-        return ResponseEntity(ex.message, HttpStatus.NOT_FOUND)
-    }
-
-    @ExceptionHandler(Exception::class)
-    fun handleGenericException(
-        ex: Exception,
-        request: WebRequest
-    ): ResponseEntity<String> {
-        log.error("Unexpected error: ${ex.message}", ex)
-        return ResponseEntity("Internal server error", HttpStatus.INTERNAL_SERVER_ERROR)
+    fun handleEntityNotFoundException(ex: EntityNotFoundException): ResponseEntity<ErrorResponse> {
+        log.warn("EntityNotFoundException: ${ex.message}", ex)
+        val error = ErrorResponse(
+            message = ex.message ?: "Entity not found",
+            errorCode = "NOT_FOUND"
+        )
+        return ResponseEntity(error, HttpStatus.NOT_FOUND)
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleValidationException(
-        ex: MethodArgumentNotValidException,
-        request: WebRequest
-    ): ResponseEntity<Map<String, String?>> {
-        val errors = ex.bindingResult.fieldErrors.associate { error ->
-            error.field to (error.defaultMessage ?: "Invalid value")
+    fun handleValidationException(ex: MethodArgumentNotValidException): ResponseEntity<ErrorResponse> {
+        log.warn("Validation error: ${ex.message}", ex)
+        val fieldErrors = ex.bindingResult.fieldErrors.joinToString("; ") {
+            "${it.field}: ${it.defaultMessage}"
         }
-        return ResponseEntity(errors, HttpStatus.BAD_REQUEST)
+        val error = ErrorResponse(
+            message = "Validation error: $fieldErrors",
+            errorCode = "VALIDATION_ERROR"
+        )
+        return ResponseEntity(error, HttpStatus.BAD_REQUEST)
     }
 
+    @ExceptionHandler(Exception::class)
+    fun handleGenericException(ex: Exception): ResponseEntity<ErrorResponse> {
+        log.error("Unexpected error: ${ex.message}", ex)
+        val error = ErrorResponse(
+            message = "Internal server error",
+            errorCode = "INTERNAL_ERROR"
+        )
+        return ResponseEntity(error, HttpStatus.INTERNAL_SERVER_ERROR)
+    }
 }
