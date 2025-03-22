@@ -40,7 +40,7 @@ class TaskController(
         return ResponseEntity.ok(task.toResponse())
     }
 
-    @GetMapping("/executor/{executorId}")
+    @GetMapping("/user/{executorId}")
     fun getTasksByExecutorId(
         @PathVariable executorId: Long,
         @PageableDefault(size = 10) pageable: Pageable

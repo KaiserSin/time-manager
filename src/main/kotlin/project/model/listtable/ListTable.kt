@@ -1,13 +1,12 @@
 package project.model.listtable
 
 import jakarta.persistence.*
-import project.model.executor.Executor
+import project.model.user.User
 import project.model.task.Task
 
 @Entity
 @Table(name = "list")
 data class ListTable(
-
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long? = null,
@@ -17,6 +16,6 @@ data class ListTable(
     val task: Task,
 
     @ManyToOne
-    @JoinColumn(name = "executor_id", nullable = false)
-    val executor: Executor
+    @JoinColumn(name = "user_id", nullable = false)
+    val user: User
 )

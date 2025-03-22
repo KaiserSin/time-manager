@@ -6,7 +6,7 @@ import org.springframework.stereotype.Service
 import project.exception.EntityNotFoundException
 import project.model.task.Task
 import project.model.task.dto.TaskRequest
-import project.repository.ExecutorRepository
+import project.repository.UserRepository
 import project.repository.TaskRepository
 import java.time.Duration
 import java.time.LocalDateTime
@@ -14,20 +14,16 @@ import java.time.LocalDateTime
 @Service
 class TaskService(
     private val taskRepository: TaskRepository,
-    private val executorRepository: ExecutorRepository
+    private val userRepository: UserRepository
 ) {
 
-    /**
-     * Создать новую задачу (Task).
-     */
     fun createTask(taskRequest: TaskRequest): Task {
-        // Проверяем, что executor существует
-        val executor = executorRepository.findById(taskRequest.executorId)
+
+        val user = userRepository.findById(taskRequest.userId)
             .orElseThrow {
-                EntityNotFoundException("Executor with id ${taskRequest.executorId} not found")
+                EntityNotFoundException("User with id ${taskRequest.userId} not found")
             }
 
-        // Преобразуем стартовое время и продолжительность
         val startTime = requireNotNull(taskRequest.startTime) {
             "startTime cannot be null for task creation"
         }

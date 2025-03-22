@@ -1,10 +1,10 @@
-package project.model.executor.dto
+package project.model.user.dto
 
 import jakarta.validation.constraints.*
 import project.util.OnCreate
 import project.util.OnUpdate
 
-data class ExecutorRequest(
+data class UserRequest(
 
     @field:NotBlank(
         message = "Name cannot be blank",

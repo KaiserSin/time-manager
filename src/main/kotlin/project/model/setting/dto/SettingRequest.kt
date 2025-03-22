@@ -9,10 +9,10 @@ import project.util.OnUpdate
 data class SettingRequest(
 
     @field:NotNull(
-        message = "executorId cannot be null",
+        message = "userId cannot be null",
         groups = [OnCreate::class, OnUpdate::class]
     )
-    val executorId: Long? = null,
+    val userId: Long? = null,
 
 
     @field:NotBlank(

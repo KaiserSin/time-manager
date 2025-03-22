@@ -49,15 +49,15 @@ data class TaskRequest(
 
 
     @field:NotNull(
-        message = "executorId cannot be null",
+        message = "userId cannot be null",
         groups = [OnCreate::class, OnUpdate::class]
     )
     @field:Min(
         value = 1,
-        message = "executorId must be a positive number",
+        message = "userrId must be a positive number",
         groups = [OnCreate::class]
     )
-    val executorId: Long? = null,
+    val userId: Long? = null,
 
 
     val isDone: Boolean? = null

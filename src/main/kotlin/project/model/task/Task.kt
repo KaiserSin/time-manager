@@ -29,5 +29,5 @@ data class Task(
     val isDone: Boolean = false,
 
     @OneToMany(mappedBy = "task", cascade = [CascadeType.ALL], orphanRemoval = true)
-    val executors: List<ListTable> = emptyList()
+    val users: List<ListTable> = emptyList()
 )

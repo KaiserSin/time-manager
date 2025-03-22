@@ -40,7 +40,7 @@ class SettingController(
         return ResponseEntity.ok(setting.toResponse())
     }
 
-    @GetMapping("/executor/{executorId}")
+    @GetMapping("/user/{executorId}")
     fun getSettingsByExecutorId(
         @PathVariable executorId: Long,
         @PageableDefault(size = 10) pageable: Pageable

@@ -16,7 +16,7 @@ interface TaskRepository : JpaRepository<Task, Long> {
     @Query("""
         SELECT t FROM Task t 
         JOIN ListTable l ON t.id = l.task.id 
-        WHERE l.executor.id = :executorId
+        WHERE l.user.id = :executorId
     """)
     fun findAllByExecutorId(@Param("executorId") executorId: Long, pageable: Pageable): Page<Task>
 
@@ -24,7 +24,7 @@ interface TaskRepository : JpaRepository<Task, Long> {
     @Query("""
         SELECT t FROM Task t
         JOIN ListTable l ON t.id = l.task.id
-        WHERE l.executor.id = :executorId
+        WHERE l.user.id = :executorId
         AND t.startTime > :afterTime
         ORDER BY t.startTime ASC
     """)

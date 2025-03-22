@@ -2,7 +2,7 @@ package project.model.setting.dto
 
 data class SettingResponse(
     val id: Long,
-    val executorId: Long?,
+    val userId: Long?,
     val text: String
 )
 

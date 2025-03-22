@@ -2,7 +2,7 @@ package project.repository
 
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
-import project.model.executor.Executor
+import project.model.user.User
 
 @Repository
-interface ExecutorRepository : JpaRepository<Executor, Long>
+interface UserRepository : JpaRepository<User, Long>

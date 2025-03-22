@@ -6,21 +6,21 @@ import org.springframework.stereotype.Service
 import project.exception.EntityNotFoundException
 import project.model.setting.Setting
 import project.model.setting.dto.SettingRequest
-import project.repository.ExecutorRepository
+import project.repository.UserRepository
 import project.repository.SettingRepository
 
 @Service
 class SettingService(
     private val settingRepository: SettingRepository,
-    private val executorRepository: ExecutorRepository
+    private val userRepository: UserRepository
 ) {
 
     fun createSettingInDb(settingRequest: SettingRequest): Setting {
-        val executor = executorRepository.findById(settingRequest.executorId)
+        val user = userRepository.findById(settingRequest.userId)
             .orElseThrow {
-                EntityNotFoundException("Executor with id ${settingRequest.executorId} not found")
+                EntityNotFoundException("User with id ${settingRequest.userId} not found")
             }
-        val setting = Setting(executor = executor, text = settingRequest.text)
+        val setting = Setting(user = user, text = settingRequest.text)
         return settingRepository.save(setting)
     }
 
@@ -53,12 +53,12 @@ class SettingService(
 
     fun updateSetting(id: Long, settingRequest: SettingRequest): Setting {
         val existingSetting = getSettingByIdOrThrow(id)
-        val executor = executorRepository.findById(settingRequest.executorId)
+        val user = userRepository.findById(settingRequest.userId)
             .orElseThrow {
-                EntityNotFoundException("Executor with id ${settingRequest.executorId} not found")
+                EntityNotFoundException("User with id ${settingRequest.userId} not found")
             }
         val updatedEntity = existingSetting.copy(
-            executor = executor,
+            user = user,
             text = settingRequest.text
         )
         return settingRepository.save(updatedEntity)

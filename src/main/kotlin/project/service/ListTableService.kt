@@ -1,7 +1,7 @@
 package project.service
 
 import org.springframework.stereotype.Service
-import project.model.executor.Executor
+import project.model.user.User
 import project.model.listtable.ListTable
 import project.model.task.Task
 import project.repository.ListTableRepository
@@ -9,8 +9,8 @@ import project.repository.ListTableRepository
 @Service
 class ListTableService(private val listTableRepository: ListTableRepository) {
 
-    suspend fun addTaskToExecutor(task: Task, executor: Executor): ListTable {
-        val listTableEntry = ListTable(task = task, executor = executor)
+    suspend fun addTaskToExecutor(task: Task, user: User): ListTable {
+        val listTableEntry = ListTable(task = task, user = user)
         return listTableRepository.save(listTableEntry)
     }
 
